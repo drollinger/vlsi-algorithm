@@ -8,6 +8,7 @@
 #include <map>
 #include <math.h>
 #include <vector>
+#include <iostream>
 #include "cost.h"
 
 //Initialize hardcoded values that never change
@@ -52,7 +53,7 @@ int main()
     double ratio = 0.85; 
     double temp = TEMPINIT;
     if (temp < 0)
-        getInitialTemp(E, blocks, 1000);
+        temp = getInitialTemp(E, blocks, 1000);
     //The program will change ratio to 0.1 when temperature falls
     // below lambdatf * t0. After ratio is set to 0.1, the program in
     // general will terminate very quickly. 
@@ -61,8 +62,14 @@ int main()
     int moves;
     int rejects;
     int uphill;
+
+    //Output starting conditions
+    cout << "Start Topology is: " << bestE << endl;
+    cout << "Start Cost is: " << bestECost << endl;
     do
     {
+        //Check for lambdaft * t0 condition given in file. This was not in the book
+        //but I included it because it was in the homework description 
         if (temp < tempThreashold) ratio = 0.1;
         moves = rejects = uphill = 0;
         do
@@ -87,6 +94,10 @@ int main()
         temp = ratio*temp;
     //Out_of_Time not used since time limit was not given in parameters
     } while (rejects/moves <= 0.95 && temp > EPSILON);
+
+    //Output ending conditions
+    cout << "Final Topology is: " << bestE << endl;
+    cout << "Final Cost is: " << bestECost << endl;
 }
 
 double getInitialTemp(string E, map<char, dimensions> blocks, int numOfUphills)
@@ -106,7 +117,7 @@ double getInitialTemp(string E, map<char, dimensions> blocks, int numOfUphills)
         if (deltaCost > 0)
             sumOfUphills += deltaCost;
     }
-    return -1*(sumOfUphills / numOfUphills) / log(P);
+    return (-1*(sumOfUphills / (float)numOfUphills) / log(P));
 }
 
 string getNewE(string E)
@@ -116,14 +127,17 @@ string getNewE(string E)
     {
         //M1: two adjacent operands
         case 0:
+            //printf("m1\n");
             return m1(E);
             break;
         //M2: nonzero length chain
         case 1:
+            //printf("m2\n");
             return m2(E);
             break;
         //M3: adjacent operand and operator 
         case 2:
+            //printf("m3\n");
             return m3(E);
             break;
     }
@@ -135,7 +149,7 @@ string m1 (string E)
     int sw1, sw2;
     int count = 0;
     int length = E.length();
-    int operands = int(length/2);
+    int operands = int(length/2)+1;
     int s = rand()%operands;
     //False/0 is left, True/1 is right 
     int leftOrRight = (s == 0) || (rand()%2 && s < operands) ;
@@ -188,5 +202,39 @@ string m2 (string E)
 
 string m3 (string E)
 {
+    int length = E.length();
+    int operands = int(length/2)+1;
+    bool notDone = true;
+    while (notDone)
+    {
+        int s = rand()%operands;
+        int dir = rand()%2;
+        if (dir == LEFT)
+            dir = -1;
+        int mcount = 0;
+        int ocount = 0;
+        for (int i = 0; i < length; i++)
+        {
+            if (E[i] != 'H' && E[i] != 'V')
+            {
+                if (mcount == s)
+                {
+                    int aOp = i + dir;
+                    if (aOp > 0 && aOp < length && 
+                       (E[aOp] == 'H' || E[aOp] == 'V') &&
+                       (dir != RIGHT || ocount+1 < mcount))
+                    {
+                        char temp = E[i];
+                        E[i] = E[aOp];
+                        E[aOp] = temp;
+                        i = length;
+                        notDone = false;
+                    }
+                }
+                mcount++;
+            }
+            else ocount++;
+        }
+    }
     return E;
 }
