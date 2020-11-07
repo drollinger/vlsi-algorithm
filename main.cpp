@@ -1,9 +1,12 @@
 /*************************************************************
  * Name: Dallin Drollinger
  * A#: A01984170
- * Description:
- *
- *
+ * Description: main.cpp is the main code to run the simulated
+ *      annealing algorithm. The main algorithm is found in 
+ *      main() with helper functions to separate out code.
+ *      See textbook pg. 121 for psuedocode. Default vaules
+ *      are hardcoded into #define at begining and variable
+ *      valuables are defined in main(). Adjust as needed. 
  *************************************************************/
 #include <map>
 #include <math.h>
@@ -74,12 +77,15 @@ int main()
         moves = rejects = uphill = 0;
         do
         {
+            //increment moves and get new NPE 
             moves++;
             string newE = getNewE(E);
             double newEcost = cost(newE, blocks);
             double deltaCost = newEcost - currentECost;
+            //Decide whether to accept new NPE or not
             if (deltaCost < 0 || rand()/(float)RAND_MAX < exp((-1*deltaCost)/temp))
             {
+                //Update values
                 E = newE;
                 currentECost = newEcost;
                 if (deltaCost > 0) uphill++;
@@ -100,6 +106,8 @@ int main()
     cout << "Final Cost is: " << bestECost << endl;
 }
 
+//GETINITIALTEMP: Function takes initial NPE, block dimensions, and uphill num
+//                and uses that to calculate an initial temp using -delta/ln(P)
 double getInitialTemp(string E, map<char, dimensions> blocks, int numOfUphills)
 {
     double sumOfUphills = 0;
@@ -120,6 +128,8 @@ double getInitialTemp(string E, map<char, dimensions> blocks, int numOfUphills)
     return (-1*(sumOfUphills / (float)numOfUphills) / log(P));
 }
 
+//GETNEWE: Takes an NPE and selects a random move 1-3 to operate
+//         and then returns new NPE
 string getNewE(string E)
 {
     //Random selection between 0 - 2
@@ -127,23 +137,21 @@ string getNewE(string E)
     {
         //M1: two adjacent operands
         case 0:
-            //printf("m1\n");
             return m1(E);
             break;
         //M2: nonzero length chain
         case 1:
-            //printf("m2\n");
             return m2(E);
             break;
         //M3: adjacent operand and operator 
         case 2:
-            //printf("m3\n");
             return m3(E);
             break;
     }
     return E;
 }
 
+//M1: Returns a two adjacent operands swap on NPE
 string m1 (string E)
 {
     int sw1, sw2;
@@ -172,6 +180,7 @@ string m1 (string E)
     return E;
 }
 
+//M2: Returns a operator chain complement change on NPE
 string m2 (string E)
 {
     struct cTrack { 
@@ -200,6 +209,7 @@ string m2 (string E)
     return E;
 }
 
+//M3: Returns a operator operand swap that is legal NPE
 string m3 (string E)
 {
     int length = E.length();
